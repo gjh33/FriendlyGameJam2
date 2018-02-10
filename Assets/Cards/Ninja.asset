@@ -11,11 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e023592e487647e58ac0cebc99f8da0, type: 3}
   m_Name: Ninja
   m_EditorClassIdentifier: 
-  name: 
-  range: 0
-  attack: 0
+  name: Assassin
+  range: 1
+  attack: 2
   defense: 0
-  speed: 0
-  health: 0
+  speed: 4
+  health: 1
   model: {fileID: 0}
-  tile: {fileID: 0}
+  cardVisual: {fileID: 0}
+  tile: {fileID: 11400000, guid: ecfd392d534755643884133b381e1b1e, type: 2}

@@ -11,11 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e023592e487647e58ac0cebc99f8da0, type: 3}
   m_Name: Wizard
   m_EditorClassIdentifier: 
-  name: 
-  range: 0
-  attack: 0
+  name: Caster
+  range: 3
+  attack: 5
   defense: 0
-  speed: 0
-  health: 0
+  speed: 2
+  health: 3
   model: {fileID: 0}
-  tile: {fileID: 0}
+  cardVisual: {fileID: 0}
+  tile: {fileID: 11400000, guid: 46c4f7477a6016345aed3011d2503d11, type: 2}

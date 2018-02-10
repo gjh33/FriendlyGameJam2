@@ -11,11 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e023592e487647e58ac0cebc99f8da0, type: 3}
   m_Name: Tank
   m_EditorClassIdentifier: 
-  name: 
-  range: 0
-  attack: 0
-  defense: 0
-  speed: 0
-  health: 0
+  name: Knight
+  range: 1
+  attack: 1
+  defense: 1
+  speed: 1
+  health: 10
   model: {fileID: 0}
-  tile: {fileID: 0}
+  cardVisual: {fileID: 0}
+  tile: {fileID: 11400000, guid: 15819ee066dcfa247a4d2b8ef50e8e78, type: 2}
