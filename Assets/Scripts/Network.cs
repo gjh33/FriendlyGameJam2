@@ -18,15 +18,22 @@ public class Network : MonoBehaviour {
 	public Thread thread = null;
 	public Thread receive = null;
 	public Thread send = null;
-	public bool networkActive;
+	public bool networkActive = true;
 
 	void Start() {
 		if (isServer) {
 			thread = new Thread (ServerStartListening);
 		} else {
 			thread = new Thread (ClientStart);
+			StartCoroutine (TestMessage("Testing"));
 		}
 		thread.Start ();
+	}
+
+	IEnumerator TestMessage(string message) {
+		yield return new WaitForSeconds (2);
+		SendQueue.AddLast (message);
+		yield return null;
 	}
 
 	void ServerStartListening() {
