@@ -8,8 +8,8 @@ public class GameSystem : MonoBehaviour {
 
 	// Needs to instatiated at the start of a game
 	public Grid grid;
-	public GameObject playerOneKing;
-	public GameObject playerTwoKing;
+	public Player playerOne;
+	public Player playerTwo;
 
 	private static object _lock = new object();
 
@@ -73,23 +73,45 @@ public class GameSystem : MonoBehaviour {
 		applicationIsQuitting = true;
 	}
 
-	public bool Spawn(Creature creature, int x, int y) {
+	public bool DrawCard(Player player) {
+		if (player.deck.Count > 0) {
+			player.hand.Add (player.deck [0]);
+			player.deck.RemoveAt (0);
+			return true;
+		}
+		return false;
+	}
+
+	public bool PlayCard(Player player, Card card) {
+		if (player.hand.Contains (card)) {
+			player.hand.Remove (card);
+			return true;
+		}
+		return false;
+	}
+
+	public GameObject Spawn(Card card, int x, int y, Player player) {
 		// There exists a valid tile
 		if (grid [x, y].GetState () == GridCell.State.Placed) {
 			// No existing monster there
 			if (grid [x, y].occupant == null) {
-				grid [x, y].occupant = creature.gameObject;
-				return true;
+				// Create a new card
+				GameObject character = new GameObject("(instance) "+card.name);
+				Creature creature = character.AddComponent<Creature> ();
+				creature.card = card;
+				creature.owner = player;
+				grid [x, y].occupant = character;
+				return character;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/// <summary>
 	/// Places the tile where x and y are the center of the grid.
 	/// </summary>
 	/// <returns><c>true</c>, if tile was placed, <c>false</c> otherwise.</returns>
-	public bool PlaceTile(Tile tile, int x, int y, int player) {
+	public bool PlaceTile(Tile tile, int x, int y, Player player) {
 		// Check for space validity
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 5; j++) {
@@ -126,18 +148,7 @@ public class GameSystem : MonoBehaviour {
 			}
 		}
 
-		// Get player king
-		GameObject king;
-		if (player == 1) {
-			king = playerOneKing;
-		} else if (player == 2) {
-			king = playerTwoKing;
-		} else {
-			Debug.LogWarning ("You need to use 1 or 2. You moron.");
-			return false;
-		}
-
-		Creature kingCreature = king.GetComponent<Creature> (); 
+		Creature kingCreature = player.king.GetComponent<Creature> (); 
 		// If DFS fails then remove the tiles and return false
 		if (!King_DFS(grid[kingCreature.x, kingCreature.y], new HashSet<GridCell>(), valid)) {
 			for (int i = 0; i < 5; i++) {
