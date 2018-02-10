@@ -8,6 +8,9 @@ public class Creature : MonoBehaviour {
 	public int x = 0;
 	public int y = 0;
 	public bool attacked = false;
+	public Player owner = null;
+	public int id;
+
 	private Card _card;
 
 	public Card card {

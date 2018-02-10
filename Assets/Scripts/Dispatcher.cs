@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Dispatcher : MonoBehaviour {
 
+	public Dictionary<int, Creature> creatureLookUp = new Dictionary<int, Creature> ();
+
 	private static Dispatcher _instance;
 
 	private static object _lock = new object();
@@ -69,36 +71,63 @@ public class Dispatcher : MonoBehaviour {
 	}
 
 	public void Command(string command, params object[] args) {
-		if (command == "summon") {
-			Creature creature = (Creature) args[0];
+		if (command == "selfplaycard") {
+			int cardIndex = (int) args[0];
 			int x = (int) args[1];
 			int y = (int) args[2];
-			int player = (int) args[3];
-			if (GameSystem.instance.PlaceTile (creature.card.tile, x, y, player)) {
-				// Basically guarenteed (MAYBE)
-				GameSystem.instance.Spawn (creature, x, y);
-				// ADD NETWORKING
+			Card card = GameSystem.instance.playerOne.hand [cardIndex];
+			if (GameSystem.instance.PlaceTile (card.tile, x, y, GameSystem.instance.playerOne)) {
+				if (GameSystem.instance.PlayCard (GameSystem.instance.playerOne, card)) {
+					// Basically guarenteed (MAYBE)
+					GameSystem.instance.Spawn (card, x, y, GameSystem.instance.playerOne);
+					// ADD NETWORKING
+				}
+			}
+		} else if (command == "enemyplaycard") {
+			int cardIndex = (int) args[0];
+			int x = (int) args[1];
+			int y = (int) args[2];
+			Card card = GameSystem.instance.playerTwo.hand [cardIndex];
+			if (GameSystem.instance.PlaceTile (card.tile, x, y, GameSystem.instance.playerTwo)) {
+				if (GameSystem.instance.PlayCard (GameSystem.instance.playerTwo, card)) {
+					// Basically guarenteed (MAYBE)
+					GameSystem.instance.Spawn (card, x, y, GameSystem.instance.playerTwo);
+					// ADD NETWORKING
+				}
 			}
 		} else if (command == "move") {
-			Creature creature = (Creature) args[0];
-			int x = (int) args[1];
-			int y = (int) args[2];
+			int creatureId = (int)args [0];
+			int x = (int)args [1];
+			int y = (int)args [2];
+			Creature creature = creatureLookUp[creatureId];
 			GameSystem.instance.Move (creature, x, y);
 			// ADD NETWORKING
 		} else if (command == "attack") {
-			Creature attacker = (Creature) args[0];
-			Creature defender = (Creature) args[1];
+			int attackerId = (int)args [0];
+			int defenderId = (int)args [1];
+			Creature attacker = creatureLookUp[attackerId];
+			Creature defender = creatureLookUp[defenderId];
 			if (GameSystem.instance.Battle (attacker, defender)) {
 				if (attacker.health == 0) {
 					GameSystem.instance.Kill (attacker);
+					creatureLookUp.Remove (attacker.id);
 				}
 				if (defender.health == 0) {
-					GameSystem.instance.Kill (attacker);
+					GameSystem.instance.Kill (defender);
+					creatureLookUp.Remove (defender.id);
 				}
 				// ADD NETWORKING
 			}
 		} else {
 			Debug.LogWarning (string.Format("Unknown command {0}", command));
 		}
+	}
+
+	private void AddNewId(Creature creature) {
+		int key = 0;
+		while (creatureLookUp.ContainsKey(key)) {
+			key++;
+		}
+		creature.id = key;
 	}
 }
