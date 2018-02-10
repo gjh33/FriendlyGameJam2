@@ -12,6 +12,7 @@ public class Grid : MonoBehaviour, IEnumerable {
     public Coordinate2 size;
     public float cellWidth = 1;
     public float cellHeight = 1;
+    public GameObject cellVisual;
 
     private GridCell[,] data;
 
@@ -34,6 +35,19 @@ public class Grid : MonoBehaviour, IEnumerable {
     {
         data = new GridCell[size.x, size.y];
         ReloadGrid();
+        for(int x = 0; x < size.x; x++)
+        {
+            for (int y = 0; y < size.y; y++)
+            {
+                GameObject temp = Instantiate(cellVisual);
+                GridCellVisual gcv = temp.GetComponent<GridCellVisual>();
+                temp.transform.localScale = new Vector3(cellWidth, cellHeight, temp.transform.localScale.z);
+                temp.transform.position = data[x, y].getWorldPosition();
+                temp.transform.parent = transform; // Parent to this
+                data[x, y].visual = gcv;
+                data[x, y].RefreshVisuals();
+            }
+        }
     }
 
     /// <summary>

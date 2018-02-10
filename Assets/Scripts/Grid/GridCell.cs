@@ -9,10 +9,11 @@ public class GridCell {
     // These values should not be changed after creation
     public Coordinate2 gridLocation { get; private set; }
     public GameObject occupant;
-    public State state;
+    public GridCellVisual visual;
 
     // Private
     private Grid grid;
+    private State state;
 
     // method variables
     // Convenience x
@@ -68,5 +69,22 @@ public class GridCell {
         float bottomLeftY = (grid.transform.position.y - ((grid.size.y * grid.cellHeight) / 2)) + (grid.cellHeight / 2);
 
         return new Vector3(bottomLeftX + (x * grid.cellWidth), bottomLeftY + (y * grid.cellHeight));
+    }
+
+    public void SetState(State st)
+    {
+        state = st;
+        RefreshVisuals();
+    }
+
+    public State GetState()
+    {
+        return state;
+    }
+
+    public void RefreshVisuals()
+    {
+        if (state == State.Empty) visual.setEmptyState();
+        if (state == State.Placed) visual.setOccupiedState();
     }
 }

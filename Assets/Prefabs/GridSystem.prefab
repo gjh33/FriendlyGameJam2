@@ -57,3 +57,4 @@ MonoBehaviour:
     y: 20
   cellWidth: 1
   cellHeight: 1
+  cellVisual: {fileID: 1273243762134156, guid: 73240e92cfc1bbf4d8701a6831ee0354, type: 2}
