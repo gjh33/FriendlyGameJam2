@@ -12,6 +12,7 @@ public class Network : MonoBehaviour {
 	// Incoming data from the client.  
 	public static string data = null;
 	public bool isServer = true;
+	public string serverIP = "";
 	public Thread thread = null;
 
 	void Start() {
@@ -85,8 +86,7 @@ public class Network : MonoBehaviour {
 		try {  
 			// Establish the remote endpoint for the socket.  
 			// This example uses port 11000 on the local computer.  
-			IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());  
-			IPAddress ipAddress = ipHostInfo.AddressList[0];  
+			IPAddress ipAddress = IPAddress.Parse(serverIP);  
 			IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);  
 
 			// Create a TCP/IP  socket.  
