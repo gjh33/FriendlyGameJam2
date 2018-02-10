@@ -10,10 +10,15 @@ using UnityEngine;
 public class Network : MonoBehaviour {
 
 	// Incoming data from the client.  
-	public static string data = null;
+	private static string data = null;
+	public static LinkedList<string> ReceiveQueue = new LinkedList<string>(); 
+	public static LinkedList<string> SendQueue = new LinkedList<string>();
 	public bool isServer = true;
 	public string serverIP = "";
 	public Thread thread = null;
+	public Thread receive = null;
+	public Thread send = null;
+	public bool networkActive;
 
 	void Start() {
 		if (isServer) {
@@ -25,106 +30,117 @@ public class Network : MonoBehaviour {
 	}
 
 	void ServerStartListening() {
+		TcpListener listener;
+		// Get IP address
+		IPAddress ipAddress = IPAddress.Parse(serverIP);  
+		// Create a listener which will spawn a send.  
+		listener = new TcpListener(ipAddress, 11000);  
+		listener.Start();
+		// Start listening for connections.  
+		Debug.Log("Waiting for a read connection...");  
+		while (networkActive) {  
+			if (listener.Pending()) {
+				Debug.Log("Established read connection...");
+				Socket socket = listener.AcceptSocket();
+				// Spawn the send thread
+				Thread send = new Thread(() => Send(socket));
+				send.Start();
+				SendQueue.AddLast ("connect");
+				listener.Stop();
+				break;
+			}
+		}
+		// Create a listener which will spawn a write.  
+		listener = new TcpListener(ipAddress, 11001);  
+		listener.Start();
+		// Start listening for connections.  
+		Debug.Log("Waiting for a write connection...");  
+		while (networkActive) {  
+			if (listener.Pending()) {
+				Debug.Log("Established write connection...");
+				Socket socket = listener.AcceptSocket();
+				// Spawn the write thread
+				Thread receive = new Thread(() => Receive(socket));
+				receive.Start();
+				listener.Stop();
+				break;
+			}
+		}
+	}
+
+	void Send(Socket socket) {
+		// An incoming connection needs to be processed.  
+		while (networkActive) {  
+			if (SendQueue.Count > 0) {  
+				byte[] msg = Encoding.ASCII.GetBytes(SendQueue.First.Value+"!"); 
+				socket.Send(msg); 
+				SendQueue.RemoveFirst ();
+			}
+		}
+		socket.Close ();
+	}
+
+	void Receive(Socket socket) {
 		// Data buffer for incoming data.  
 		byte[] bytes = new Byte[1024];  
-
-		// Establish the local endpoint for the socket.  
-		// Dns.GetHostName returns the name of the   
-		// host running the application.  
-		IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());  
-		IPAddress ipAddress = ipHostInfo.AddressList[0];  
-		IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);  
-
-		// Create a TCP/IP socket.  
-		Socket listener = new Socket(ipAddress.AddressFamily,  
-			SocketType.Stream, ProtocolType.Tcp );  
-
-		// Bind the socket to the local endpoint and   
-		// listen for incoming connections.  
-		try {  
-			listener.Bind(localEndPoint);  
-			listener.Listen(1);  
-
-			// Start listening for connections.  
-			while (true) {  
-				Console.WriteLine("Waiting for a connection...");  
-				// Program is suspended while waiting for an incoming connection.  
-				Socket handler = listener.Accept();  
-				data = null;  
-
-				// An incoming connection needs to be processed.  
-				while (true) {  
-					bytes = new byte[1024];  
-					int bytesRec = handler.Receive(bytes);  
-					data += Encoding.ASCII.GetString(bytes,0,bytesRec);  
-					if (data.IndexOf("<EOF>") > -1) {  
-						break;  
-					} 
-				}  
-
-				// Show the data on the console.  
-				Console.WriteLine( "Text received : {0}", data);  
-
-				// Echo the data back to the client.  
-				byte[] msg = Encoding.ASCII.GetBytes(data);  
-
-				handler.Send(msg);  
-				handler.Shutdown(SocketShutdown.Both);  
-				handler.Close();
-			}  
-
-		} catch (Exception e) {  
-			Debug.LogWarning(e.ToString());  
-		}  
-	}  
+		socket.ReceiveTimeout = 100;
+		data = null;  
+		// An incoming connection needs to be processed.  
+		while (networkActive) {  
+			bytes = new byte[1024];  
+			int bytesRec = socket.Receive(bytes);  
+			data += Encoding.ASCII.GetString(bytes,0,bytesRec);  
+			if (data.IndexOf("!") > -1) {  
+				Debug.Log(string.Format("Text received : {0}", data.Substring(0, data.Length - 1)));  
+				ReceiveQueue.AddLast(data.Substring(0, data.Length - 1));  
+			}
+		}
+		socket.Close ();
+	}
 
 	void ClientStart() {  
 		// Data buffer for incoming data.  
-		byte[] bytes = new byte[1024];  
+		byte[] bytes = new Byte[128];  
 
 		// Connect to a remote device.  
-		try {  
-			// Establish the remote endpoint for the socket.  
-			// This example uses port 11000 on the local computer.  
-			IPAddress ipAddress = IPAddress.Parse(serverIP);  
-			IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);  
+		// Establish the remote endpoint for the socket.  
+		// This example uses port 11000 on the local computer.  
+		IPAddress ipAddress = IPAddress.Parse(serverIP);  
+		IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);  
+
+		// Create a TCP/IP  socket.  
+		Socket receiver = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp );  
+
+		// Connect the socket to the remote endpoint. Catch any errors.  
+		receiver.Connect(remoteEP); 
+		Debug.Log(string.Format("Socket connected to {0}", receiver.RemoteEndPoint.ToString()));  
+
+		// Receive the response from the remote device.  
+		int bytesRec = receiver.Receive(bytes);  
+		if (Encoding.ASCII.GetString (bytes, 0, bytesRec) == "connect!") {
+			ipAddress = IPAddress.Parse (serverIP);  
+			remoteEP = new IPEndPoint (ipAddress, 11000);  
 
 			// Create a TCP/IP  socket.  
-			Socket sender = new Socket(ipAddress.AddressFamily,   
-				SocketType.Stream, ProtocolType.Tcp );  
+			Socket sender = new Socket (ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);  
 
 			// Connect the socket to the remote endpoint. Catch any errors.  
-			try {  
-				sender.Connect(remoteEP);  
+			sender.Connect (remoteEP);
+			// Start up the recieve and sender threads
+			Thread send = new Thread (() => Send (receiver));
+			send.Start ();
+			Thread receive = new Thread (() => Send (sender));
+			receive.Start();
+		} else {
+			// Release the socket.  
+			receiver.Shutdown(SocketShutdown.Both);  
+			receiver.Close();
+		}
+	}
 
-				Console.WriteLine("Socket connected to {0}",  
-					sender.RemoteEndPoint.ToString());  
-
-				// Encode the data string into a byte array.  
-				byte[] msg = Encoding.ASCII.GetBytes("This is a test<EOF>");  
-
-				// Send the data through the socket.  
-				sender.Send(msg);  
-
-				// Receive the response from the remote device.  
-				int bytesRec = sender.Receive(bytes);  
-				Console.WriteLine("Echoed test = {0}",  
-					Encoding.ASCII.GetString(bytes,0,bytesRec));  
-
-				// Release the socket.  
-				sender.Shutdown(SocketShutdown.Both);  
-				sender.Close();  
-
-			} catch (ArgumentNullException ane) {  
-				Console.WriteLine("ArgumentNullException : {0}",ane.ToString());  
-			} catch (SocketException se) {  
-				Console.WriteLine("SocketException : {0}",se.ToString());  
-			} catch (Exception e) {  
-				Console.WriteLine("Unexpected exception : {0}", e.ToString());  
-			}  
-
-		} catch (Exception e) {  
-			Console.WriteLine( e.ToString());  
-		}  
+	void OnApplicationQuit() {
+		if (thread != null) {
+			networkActive = false;
+		}
 	}
 }
