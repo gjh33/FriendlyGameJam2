@@ -11,5 +11,6 @@ public class Card : ScriptableObject {
 	public int speed;
 	public int health;
 	public GameObject model;
+    public GameObject cardVisual;
 	public Tile tile;
 }
