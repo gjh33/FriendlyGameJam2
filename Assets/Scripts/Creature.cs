@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Monster : MonoBehaviour {
+public class Creature : MonoBehaviour {
 
 	public int health = 0;
 	public int x = 0;

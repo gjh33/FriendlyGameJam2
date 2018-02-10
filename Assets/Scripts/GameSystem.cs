@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameSystem : MonoBehaviour{
+public class GameSystem : MonoBehaviour {
 
 	private static GameSystem _instance;
 
+	// Needs to instatiated at the start of a game
+	public Grid grid;
+	public GameObject playerOneKing;
+	public GameObject playerTwoKing;
+
 	private static object _lock = new object();
 
-	public static GameSystem Instance
+	public static GameSystem instance
 	{
 		get
 		{
@@ -66,5 +71,161 @@ public class GameSystem : MonoBehaviour{
 	/// </summary>
 	public void OnDestroy () {
 		applicationIsQuitting = true;
+	}
+
+	public bool Spawn(Creature creature, int x, int y) {
+		// There exists a valid tile
+		if (grid [x, y].GetState () == GridCell.State.Placed) {
+			// No existing monster there
+			if (grid [x, y].occupant == null) {
+				grid [x, y].occupant = creature.gameObject;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Places the tile where x and y are the center of the grid.
+	/// </summary>
+	/// <returns><c>true</c>, if tile was placed, <c>false</c> otherwise.</returns>
+	public bool PlaceTile(Tile tile, int x, int y, int player) {
+		// Check for space validity
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				// Check if tile is checked in the tile scheme
+				if (tile [i, j]) {
+					int test_x = x + i - 2;
+					int test_y = y + j - 2;
+					// Bound check
+					if (test_x >= 0 && test_x < grid.size.x && test_y >= 0 && test_y < grid.size.y) {
+						// Check to see if grid is taken
+						if (grid [test_x, test_y].GetState () == GridCell.State.Placed) {
+							return false;
+						}
+					} else {
+						// If grid falls outside the grid
+						return false;
+					}
+				}
+			}
+		}
+
+		// Check for connection validity
+		// Set the tiles as placed
+		HashSet<GridCell> valid = new HashSet<GridCell>(); 
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				// Check if tile is checked in the tile scheme
+				if (tile [i, j]) {
+					int real_x = x + i - 2;
+					int real_y = y + j - 2;
+					grid [real_x, real_y].SetState (GridCell.State.Placed);
+					valid.Add (grid [real_x, real_y]);
+				}
+			}
+		}
+
+		// Get player king
+		GameObject king;
+		if (player == 1) {
+			king = playerOneKing;
+		} else if (player == 2) {
+			king = playerTwoKing;
+		} else {
+			Debug.LogWarning ("You need to use 1 or 2. You moron.");
+			return false;
+		}
+
+		Creature kingCreature = king.GetComponent<Creature> (); 
+		// If DFS fails then remove the tiles and return false
+		if (!King_DFS(grid[kingCreature.x, kingCreature.y], new HashSet<GridCell>(), valid)) {
+			for (int i = 0; i < 5; i++) {
+				for (int j = 0; j < 5; j++) {
+					// Check if tile is checked in the tile scheme
+					if (tile [i, j]) {
+						int real_x = x + i - 2;
+						int real_y = y + j - 2;
+						grid [real_x, real_y].SetState (GridCell.State.Empty);
+					}
+				}
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public bool Move(Creature creature, int x, int y) {
+		if (Local_DFS (grid [creature.x, creature.y], grid [x, y], creature.card.speed)) {
+			grid [creature.x, creature.y].occupant = null;
+			grid [x, y].occupant = creature.gameObject;
+			creature.x = x;
+			creature.y = y;
+			return true;
+		}
+		return false;
+	}
+
+	public bool Kill(Creature creature) {
+		grid [creature.x, creature.y].occupant = null;
+		return true;
+	}
+
+	/// <summary>
+	/// Battle the specified attacker and defender. Returns true is a battle is 
+	/// resolvable, false otherwise.
+	/// </summary>
+	public bool Battle(Creature attacker, Creature defender) {
+		int manhattan = Mathf.Abs (attacker.x - defender.x) + Mathf.Abs (attacker.y - defender.y);
+		// Resolve range
+		if (manhattan > attacker.card.range) {
+			// The distance between the two units is too great
+			return false;
+		}
+
+		// Attacker attacks first
+		int attackDamage = Mathf.Clamp (attacker.card.attack - defender.card.defense, 0, defender.health);
+		defender.health = defender.health - attackDamage;
+		if (defender.health == 0) {
+			return true;
+		}
+
+		if (manhattan <= defender.card.range) {
+			// Defender retaliate
+			int defenderDamage = Mathf.Clamp (defender.card.attack - attacker.card.defense, 0, attacker.health);
+			attacker.health = attacker.health - defenderDamage;
+			return true;
+		}
+		return false;
+	}
+
+	private bool Local_DFS(GridCell cell, GridCell target, int depth) {
+		if (cell == target) {
+			return true;
+		}
+		if (depth == 0) {
+			return false;
+		}
+		foreach (GridCell neighbour in grid.GetNeighborsFor(cell)) {
+			if (Local_DFS (neighbour, target, depth - 1)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private bool King_DFS(GridCell cell, HashSet<GridCell> visited, HashSet<GridCell> valid) {
+		if (valid.Contains(cell)) {
+			return true;
+		}
+		visited.Add (cell);
+		foreach (GridCell neighbour in grid.GetNeighborsFor(cell)) {
+			if (!visited.Contains (neighbour)) {
+				if (King_DFS (neighbour, visited, valid)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

@@ -10,10 +10,10 @@ public class Tile : ScriptableObject {
 	void OnEnable(){
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 5; j++) {
-				tiles [i*5+j] = false;
+				this [i, j] = false;
 			}
 		}
-		tiles [2*5+2] = true;
+		this [2, 2] = true;
 	}
 
 	public bool this[int i, int j]{
