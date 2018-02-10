@@ -9,18 +9,21 @@ using UnityEngine;
 
 public class Network : MonoBehaviour {
 
+	// THIS IS NOT SAFE BUT IF DESYNCE HAPPENS CAN BE DONE
+
 	// Incoming data from the client.  
 	private static string data = null;
-	public static LinkedList<string> ReceiveQueue = new LinkedList<string>(); 
-	public static LinkedList<string> SendQueue = new LinkedList<string>();
+	public LinkedList<string> ReceiveQueue = new LinkedList<string>(); 
+	public LinkedList<string> SendQueue = new LinkedList<string>();
 	public bool isServer = true;
 	public string serverIP = "";
 	public Thread thread = null;
 	public Thread receive = null;
 	public Thread send = null;
-	public bool networkActive = true;
+	public bool networkActive;
 
 	void Start() {
+		networkActive = true;
 		if (isServer) {
 			thread = new Thread (ServerStartListening);
 		} else {
@@ -85,24 +88,31 @@ public class Network : MonoBehaviour {
 			}
 		}
 		socket.Close ();
+		Debug.Log ("Network send closed");
 	}
 
 	void Receive(Socket socket) {
 		// Data buffer for incoming data.  
-		byte[] bytes = new Byte[1024];  
-		socket.ReceiveTimeout = 100;
+		byte[] bytes = new Byte[1024];
+		socket.ReceiveTimeout = 500;
 		data = null;  
 		// An incoming connection needs to be processed.  
 		while (networkActive) {  
-			bytes = new byte[1024];  
-			int bytesRec = socket.Receive(bytes);  
-			data += Encoding.ASCII.GetString(bytes,0,bytesRec);  
-			if (data.IndexOf("!") > -1) {  
-				Debug.Log(string.Format("Text received : {0}", data.Substring(0, data.Length - 1)));  
-				ReceiveQueue.AddLast(data.Substring(0, data.Length - 1));  
+			try {
+				bytes = new byte[1024];  
+				int bytesRec = socket.Receive(bytes); 
+				data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+				if (data.IndexOf("!") > -1) {  
+					Debug.Log(string.Format("Text received : {0}", data.Substring(0, data.Length - 1)));  
+					ReceiveQueue.AddLast(data.Substring(0, data.Length - 1));
+				}
+			}
+			catch (SocketException se) {
+				continue;
 			}
 		}
 		socket.Close ();
+		Debug.Log ("Network receive closed");
 	}
 
 	void ClientStart() {  
@@ -126,7 +136,7 @@ public class Network : MonoBehaviour {
 		int bytesRec = receiver.Receive(bytes);  
 		if (Encoding.ASCII.GetString (bytes, 0, bytesRec) == "connect!") {
 			ipAddress = IPAddress.Parse (serverIP);  
-			remoteEP = new IPEndPoint (ipAddress, 11000);  
+			remoteEP = new IPEndPoint (ipAddress, 11001);  
 
 			// Create a TCP/IP  socket.  
 			Socket sender = new Socket (ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);  

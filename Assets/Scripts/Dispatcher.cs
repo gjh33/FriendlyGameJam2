@@ -5,6 +5,7 @@ using UnityEngine;
 public class Dispatcher : MonoBehaviour {
 
 	public Dictionary<int, Creature> creatureLookUp = new Dictionary<int, Creature> ();
+	public Network network;
 
 	private static Dispatcher _instance;
 
@@ -40,7 +41,7 @@ public class Dispatcher : MonoBehaviour {
 						GameObject singleton = new GameObject();
 						_instance = singleton.AddComponent<Dispatcher>();
 						singleton.name = "(singleton) "+ typeof(Dispatcher).ToString();
-
+						network = GameObject.Find ("Network");
 						DontDestroyOnLoad(singleton);
 
 						Debug.Log("[Singleton] An instance of " + typeof(Dispatcher) + 
@@ -70,41 +71,59 @@ public class Dispatcher : MonoBehaviour {
 		applicationIsQuitting = true;
 	}
 
-	public void Command(string command, params object[] args) {
+	void Update() {
+		if (network.ReceiveQueue.Count > 0) {
+			string request = network.ReceiveQueue.First.Value;
+			string[] commands = request.Split (' ');
+			int[] args = new int[commands.Length];
+			for (int i = 0; args.Length; i++) {
+				args [i] = int.Parse (commands [1 + i]);
+			}
+			Command (commands[0], args);
+			network.ReceiveQueue.RemoveFirst ();
+		}
+	}
+
+	public void Command(string command, params int[] args) {
 		if (command == "selfplaycard") {
-			int cardIndex = (int) args[0];
-			int x = (int) args[1];
-			int y = (int) args[2];
+			int cardIndex = args[0];
+			int x = args[1];
+			int y = args[2];
 			Card card = GameSystem.instance.playerOne.hand [cardIndex];
 			if (GameSystem.instance.PlaceTile (card.tile, x, y, GameSystem.instance.playerOne)) {
 				if (GameSystem.instance.PlayCard (GameSystem.instance.playerOne, card)) {
 					// Basically guarenteed (MAYBE)
 					GameSystem.instance.Spawn (card, x, y, GameSystem.instance.playerOne);
-					// ADD NETWORKING
+					network.SendQueue.AddLast (string.Format("enemyplaycard {0} {1} {2}", cardIndex, x, y));
 				}
 			}
 		} else if (command == "enemyplaycard") {
-			int cardIndex = (int) args[0];
-			int x = (int) args[1];
-			int y = (int) args[2];
+			int cardIndex = args[0];
+			int x = args[1];
+			int y = args[2];
 			Card card = GameSystem.instance.playerTwo.hand [cardIndex];
 			if (GameSystem.instance.PlaceTile (card.tile, x, y, GameSystem.instance.playerTwo)) {
 				if (GameSystem.instance.PlayCard (GameSystem.instance.playerTwo, card)) {
 					// Basically guarenteed (MAYBE)
 					GameSystem.instance.Spawn (card, x, y, GameSystem.instance.playerTwo);
-					// ADD NETWORKING
 				}
 			}
-		} else if (command == "move") {
-			int creatureId = (int)args [0];
-			int x = (int)args [1];
-			int y = (int)args [2];
+		} else if (command == "selfmove") {
+			int creatureId = args [0];
+			int x = args [1];
+			int y = args [2];
 			Creature creature = creatureLookUp[creatureId];
 			GameSystem.instance.Move (creature, x, y);
-			// ADD NETWORKING
-		} else if (command == "attack") {
-			int attackerId = (int)args [0];
-			int defenderId = (int)args [1];
+			network.SendQueue.AddLast (string.Format("enemymove {0} {1} {2}", creatureId, x, y));
+		} else if (command == "enemymove") {
+			int creatureId = args [0];
+			int x = args [1];
+			int y = args [2];
+			Creature creature = creatureLookUp[creatureId];
+			GameSystem.instance.Move (creature, x, y);
+		} else if (command == "selfattack") {
+			int attackerId = args [0];
+			int defenderId = args [1];
 			Creature attacker = creatureLookUp[attackerId];
 			Creature defender = creatureLookUp[defenderId];
 			if (GameSystem.instance.Battle (attacker, defender)) {
@@ -116,7 +135,22 @@ public class Dispatcher : MonoBehaviour {
 					GameSystem.instance.Kill (defender);
 					creatureLookUp.Remove (defender.id);
 				}
-				// ADD NETWORKING
+				network.SendQueue.AddLast (string.Format("enemyattack {0} {1}", attackerId, defenderId));
+			}
+		} else if (command == "enemyattack") {
+			int attackerId = args [0];
+			int defenderId = args [1];
+			Creature attacker = creatureLookUp[attackerId];
+			Creature defender = creatureLookUp[defenderId];
+			if (GameSystem.instance.Battle (attacker, defender)) {
+				if (attacker.health == 0) {
+					GameSystem.instance.Kill (attacker);
+					creatureLookUp.Remove (attacker.id);
+				}
+				if (defender.health == 0) {
+					GameSystem.instance.Kill (defender);
+					creatureLookUp.Remove (defender.id);
+				}
 			}
 		} else {
 			Debug.LogWarning (string.Format("Unknown command {0}", command));
