@@ -204,7 +204,6 @@ GameObject:
   - component: {fileID: 405336826}
   - component: {fileID: 405336828}
   - component: {fileID: 405336827}
-  - component: {fileID: 405336829}
   m_Layer: 5
   m_Name: CardHandPanel
   m_TagString: Untagged
@@ -227,7 +226,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 60}
+  m_AnchoredPosition: {x: 0, y: 30}
   m_SizeDelta: {x: 0, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &405336827
@@ -241,62 +240,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 557f3476c96db5849a4c425c97060587, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testCardObject: {fileID: 1763909794313636, guid: ace778e1de5c0eb438dbca41cd187e92,
-    type: 2}
+  gameGrid: {fileID: 1218685826}
   cards: []
+  card1: {fileID: 11400000, guid: 0b51587baf28b87498b958113ff539e1, type: 2}
+  card2: {fileID: 11400000, guid: b95502301e5f33b4580c85396dff41ab, type: 2}
 --- !u!222 &405336828
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 405336825}
---- !u!114 &405336829
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 405336825}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1862395651, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Delegates:
-  - eventID: 0
-    callback:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 405336827}
-          m_MethodName: OnPointerEnter
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-      m_TypeName: UnityEngine.EventSystems.EventTrigger+TriggerEvent, UnityEngine.UI,
-        Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  - eventID: 1
-    callback:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 405336827}
-          m_MethodName: OnPointerExit
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-      m_TypeName: UnityEngine.EventSystems.EventTrigger+TriggerEvent, UnityEngine.UI,
-        Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  delegates: []
 --- !u!1 &932741676
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,6 +344,12 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1218685826 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 114594182148846510, guid: 9db648e0f2b8799409e76ffc6a283f62,
+    type: 2}
+  m_PrefabInternal: {fileID: 2097663367}
+  m_Script: {fileID: 11500000, guid: 0d4296cc1a1af7f479ff5da5c12878d8, type: 3}
 --- !u!1 &1815198337
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,6 +6,7 @@ public class GridCellVisual : MonoBehaviour {
 
     public Material emptyStateMaterial;
     public Material occupiedStateMaterial;
+    public Material hoverMaterial;
 
 	public void setEmptyState()
     {
@@ -15,5 +16,10 @@ public class GridCellVisual : MonoBehaviour {
     public void setOccupiedState()
     {
         gameObject.GetComponent<Renderer>().material = occupiedStateMaterial;
+    }
+
+    public void setHoverState()
+    {
+        gameObject.GetComponent<Renderer>().material = hoverMaterial;
     }
 }

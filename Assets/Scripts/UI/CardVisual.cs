@@ -4,4 +4,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class CardVisual : MonoBehaviour {
+    [HideInInspector]
+    public Card cardType;
 }

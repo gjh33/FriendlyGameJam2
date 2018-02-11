@@ -18,4 +18,5 @@ MonoBehaviour:
   speed: 1
   health: 1
   model: {fileID: 0}
+  cardVisual: {fileID: 1763909794313636, guid: 1afaf45308ee48c4595e362d185d3e78, type: 2}
   tile: {fileID: 11400000, guid: 01e1c9e87d8dea04faee6fe0adb4d563, type: 2}

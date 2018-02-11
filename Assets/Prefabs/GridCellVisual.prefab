@@ -450,3 +450,4 @@ MonoBehaviour:
   emptyStateMaterial: {fileID: 2100000, guid: 7f15f71e96004884faa308badb57abe2, type: 2}
   occupiedStateMaterial: {fileID: 2100000, guid: 4d5ebcc968504ec4789a438c559e70ef,
     type: 2}
+  hoverMaterial: {fileID: 2100000, guid: c2a8fe5bfed965a438519fbac7aea24a, type: 2}

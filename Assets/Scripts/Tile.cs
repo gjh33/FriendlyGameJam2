@@ -7,15 +7,6 @@ public class Tile : ScriptableObject {
 
 	public bool[] tiles = new bool[25];
 
-	void OnEnable(){
-		for (int i = 0; i < 5; i++) {
-			for (int j = 0; j < 5; j++) {
-				this [i, j] = false;
-			}
-		}
-		this [2, 2] = true;
-	}
-
 	public bool this[int i, int j]{
 		get
 		{
